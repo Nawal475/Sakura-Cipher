@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sakura Cipher — Aplikasi Kriptografi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Serif+JP:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0f0009;
+      --panel: #1e0015;
+      --panel2: #2a001c;
+      --pink: #e91e8c;
+      --pink2: #ff6eb4;
+      --pink3: #ffb3d9;
+      --gold: #ffd700;
+      --muted: #9e6080;
+      --entry: #250018;
+      --border: #4d0035;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 60px;
+      overflow-x: hidden;
+    }
+
+    /* Petal background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(233,30,140,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, rgba(233,30,140,0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .petals {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .petal {
+      position: absolute;
+      top: -30px;
+      font-size: 18px;
+      opacity: 0;
+      animation: fall linear infinite;
+      user-select: none;
+    }
+
+    @keyframes fall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+      80%  { opacity: 0.3; }
+      100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      background: linear-gradient(180deg, var(--panel2) 0%, var(--panel) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 20px 20px;
+      text-align: center;
+    }
+
+    .cherry {
+      font-size: 13px;
+      letter-spacing: 6px;
+      color: var(--pink);
+      font-family: 'Noto Serif JP', serif;
+      margin-bottom: 6px;
+      opacity: 0.7;
+    }
+
+    h1 {
+      font-size: clamp(22px, 5vw, 32px);
+      color: var(--pink);
+      letter-spacing: 4px;
+      text-shadow: 0 0 20px rgba(233,30,140,0.5), 0 0 40px rgba(233,30,140,0.2);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ─── MAIN CARD ─── */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 660px;
+      padding: 0 16px;
+      margin-top: 32px;
+    }
+
+    .info-bar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-bar::before { content: '◈'; color: var(--pink); }
+
+    /* ─── TABS ─── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 4px;
+    }
+
+    .tab:hover { border-color: var(--pink); color: var(--pink3); }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(233,30,140,0.2), rgba(233,30,140,0.05));
+      border-color: var(--pink);
+      color: var(--pink2);
+      box-shadow: 0 0 12px rgba(233,30,140,0.15);
+    }
+
+    /* ─── LABELS ─── */
+    .field-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-label::before { content: '▸'; color: var(--pink); }
+
+    /* ─── TEXTAREA ─── */
+    .text-wrap {
+      position: relative;
+      margin-bottom: 4px;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--entry);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--pink2);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      padding: 14px 16px;
+      resize: vertical;
+      min-height: 110px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      line-height: 1.7;
+    }
+
+    textarea:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 2px rgba(233,30,140,0.1), inset 0 0 20px rgba(233,30,140,0.03);
+    }
+
+    textarea::placeholder { color: var(--muted); opacity: 0.6; }
+    textarea:disabled { cursor: default; color: var(--pink3); }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--pink), transparent);
+      margin: 22px 0;
+      opacity: 0.4;
+    }
+
+    /* ─── BUTTONS ─── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin: 22px 0;
+    }
+
+    .btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .btn:active::after { opacity: 0.06; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pink), #b01568);
+      color: #ffd0ea;
+      box-shadow: 0 4px 20px rgba(233,30,140,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 25px rgba(233,30,140,0.45);
+    }
+
+    .btn-secondary {
+      background: var(--panel2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--muted);
+      color: var(--pink3);
+    }
+
+    /* ─── COPY BUTTON ─── */
+    .copy-btn {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(233,30,140,0.12);
+      border: 1px solid rgba(233,30,140,0.3);
+      color: var(--pink);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover { background: rgba(233,30,140,0.22); }
+    .copy-btn.copied { color: var(--gold); border-color: var(--gold); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative;
+      z-index: 1;
+      margin-top: 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 2px;
+      opacity: 0.6;
+    }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--panel2);
+      border: 1px solid var(--pink);
+      color: var(--pink2);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      padding: 10px 24px;
+      border-radius: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s;
+      z-index: 999;
+      box-shadow: 0 0 20px rgba(233,30,140,0.2);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─── RESULT SECTION ─── */
+    .result-section { position: relative; }
+
+    /* ─── CHAR COUNT ─── */
+    .char-count {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    /* ─── TABLE INFO ─── */
+    .table-toggle {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .table-toggle:hover { border-color: var(--muted); color: var(--pink3); }
+
+    .tabel-box {
+      display: none;
+      background: var(--entry);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .tabel-box.open { display: block; }
+
+    .tabel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 6px;
+    }
+
+    .tabel-item {
+      font-size: 11px;
+      color: var(--pink3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tabel-item .key {
+      color: var(--gold);
+      min-width: 12px;
+    }
+
+    .tabel-item .arrow {
+      color: var(--muted);
+      font-size: 9px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Falling petals -->
+<div class="petals" id="petals"></div>
+
+<header>
+  <div class="cherry">さくら暗号</div>
+  <h1>🌸 SAKURA CIPHER 🌸</h1>
+  <div class="subtitle">Aplikasi Kriptografi — Algoritma 3 Lapisan Buatan Sendiri</div>
+</header>
+
+<div class="container">
+
+  <div class="info-bar">
+    Pola: han-ala-lin → han-x ala-x lin-x → Setiap kata + 'x' lalu dibalik
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-enc" onclick="setMode('enkripsi')">▶ ENKRIPSI</button>
+    <button class="tab" id="tab-dec" onclick="setMode('dekripsi')">◀ DEKRIPSI</button>
+  </div>
+
+  <!-- INPUT -->
+  <div class="field-label" id="label-input">TEKS ASLI</div>
+  <div class="text-wrap">
+    <textarea id="inputText" rows="4" placeholder="Ketik teks di sini..." oninput="updateCount()"></textarea>
+  </div>
+  <div class="char-count"><span id="charCount">0</span> karakter</div>
+
+  <div class="divider"></div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btnAction" onclick="proses()">▶ ENKRIPSI</button>
+    <button class="btn btn-secondary" onclick="reset()">↺ RESET</button>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="field-label" id="label-hasil">HASIL ENKRIPSI</div>
+  <div class="text-wrap result-section">
+    <textarea id="hasilText" rows="5" disabled placeholder="Hasil akan muncul di sini..."></textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyHasil()">COPY</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TABEL KODE -->
+  <div class="table-toggle" onclick="toggleTabel()">
+    <span id="toggleArrow">▸</span> LIHAT TABEL KODE
+  </div>
+  <div class="tabel-box" id="tabelBox">
+    <div class="tabel-grid" id="tabelGrid"></div>
+  </div>
+
+</div>
+
+<footer>Sakura Cipher • Algoritma Kriptografi Buatan Sendiri • Python → Web</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── TABEL CIPHER ──
+  const TABEL = {
+    'a':'ala','b':'bre','c':'cir','d':'dor','e':'ela','f':'fer',
+    'g':'gor','h':'han','i':'iri','j':'jar','k':'kar','l':'lin',
+    'm':'mar','n':'nar','o':'oro','p':'par','q':'qur','r':'ren',
+    's':'sir','t':'tor','u':'ura','v':'ven','w':'war','x':'xer',
+    'y':'yar','z':'zor',' ':'spa'
+  };
+
+  const TABEL_BALIK = Object.fromEntries(Object.entries(TABEL).map(([k,v]) => [v,k]));
+
+  function enkripsi(pesan) {
+    pesan = pesan.toLowerCase();
+    const kata_list = [];
+    for (const h of pesan) {
+      kata_list.push(TABEL[h] !== undefined ? TABEL[h] : h);
+    }
+    const kata_x = kata_list.map(k => k + 'x');
+    return kata_x.reverse().join(' ');
+  }
+
+  function dekripsi(cipher) {
+    const kata_list = cipher.trim().split(' ');
+    const kata_balik = [...kata_list].reverse();
+    const kata_bersih = kata_balik.map(k => k.endsWith('x') ? k.slice(0,-1) : k);
+    return kata_bersih.map(k => TABEL_BALIK[k] !== undefined ? TABEL_BALIK[k] : k).join('');
+  }
+
+  // ── STATE ──
+  let mode = 'enkripsi';
+
+  function setMode(m) {
+    mode = m;
+    reset();
+    const isEnc = m === 'enkripsi';
+    document.getElementById('tab-enc').classList.toggle('active', isEnc);
+    document.getElementById('tab-dec').classList.toggle('active', !isEnc);
+    document.getElementById('label-input').textContent = isEnc ? 'TEKS ASLI' : 'CIPHERTEXT';
+    document.getElementById('label-hasil').textContent = isEnc ? 'HASIL ENKRIPSI' : 'HASIL DEKRIPSI';
+    document.getElementById('btnAction').textContent = isEnc ? '▶ ENKRIPSI' : '◀ DEKRIPSI';
+    document.getElementById('inputText').placeholder = isEnc ? 'Ketik teks asli di sini...' : 'Tempel ciphertext di sini...';
+  }
+
+  function proses() {
+    const teks = document.getElementById('inputText').value.trim();
+    if (!teks) { showToast('⚠ Masukkan teks terlebih dahulu!'); return; }
+    const hasil = mode === 'enkripsi' ? enkripsi(teks) : dekripsi(teks);
+    const el = document.getElementById('hasilText');
+    el.removeAttribute('disabled');
+    el.value = hasil;
+    el.setAttribute('disabled','');
+    document.getElementById('copyBtn').textContent = 'COPY';
+    document.getElementById('copyBtn').classList.remove('copied');
+    showToast(mode === 'enkripsi' ? '✓ Enkripsi berhasil!' : '✓ Dekripsi berhasil!');
+  }
+
+  function reset() {
+    document.getElementById('inputText').value = '';
+    const el = document.getElementById('hasilText');
+    el.removeAttribute('disabled');
+    el.value = '';
+    el.setAttribute('disabled','');
+    document.getElementById('charCount').textContent = '0';
+    document.getElementById('copyBtn').textContent = 'COPY';
+    document.getElementById('copyBtn').classList.remove('copied');
+  }
+
+  function updateCount() {
+    document.getElementById('charCount').textContent =
+      document.getElementById('inputText').value.length;
+  }
+
+  function copyHasil() {
+    const val = document.getElementById('hasilText').value;
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ COPIED';
+      btn.classList.add('copied');
+      showToast('✓ Teks disalin ke clipboard!');
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── TABEL TOGGLE ──
+  function toggleTabel() {
+    const box = document.getElementById('tabelBox');
+    const arrow = document.getElementById('toggleArrow');
+    box.classList.toggle('open');
+    arrow.textContent = box.classList.contains('open') ? '▾' : '▸';
+  }
+
+  // Build tabel grid
+  (function buildTabel() {
+    const grid = document.getElementById('tabelGrid');
+    for (const [k,v] of Object.entries(TABEL)) {
+      const item = document.createElement('div');
+      item.className = 'tabel-item';
+      item.innerHTML = `<span class="key">${k === ' ' ? 'SPC' : k}</span><span class="arrow">→</span><span>${v}</span>`;
+      grid.appendChild(item);
+    }
+  })();
+
+  // ── PETALS ──
+  (function spawnPetals() {
+    const container = document.getElementById('petals');
+    const symbols = ['🌸','✿','❀','🌺'];
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'petal';
+      p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.fontSize = (12 + Math.random() * 14) + 'px';
+      p.style.animationDuration = (8 + Math.random() * 14) + 's';
+      p.style.animationDelay = (Math.random() * 12) + 's';
+      container.appendChild(p);
+    }
+  })();
+
+  // Keyboard shortcut: Enter to process
+  document.getElementById('inputText').addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'Enter') proses();
+  });
+</script>
+</body>
+</html>
